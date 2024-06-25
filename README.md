@@ -1,2 +1,2 @@
-# CampoMinadoComSwing
-Aqui está todo o estudo com Swing Java 
+# Swing
+Aqui tem algumas praticas com o swing e entendimento da tecnica observer
