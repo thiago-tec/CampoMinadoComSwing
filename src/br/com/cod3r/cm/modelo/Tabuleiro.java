@@ -7,15 +7,14 @@ import java.util.function.Predicate;
 
 public class Tabuleiro implements CampoObservador {
 
-	private int linhas;
-	private int colunas;
-	private int minas;
+	private final int linhas;
+	private final int colunas;
+	private final int minas;
 
 	private final List<Campo> campos = new ArrayList<>();
 	private final List<Consumer<ResultadoEvento>> observadores = new ArrayList<>();
 
 	public Tabuleiro(int linhas, int colunas, int minas) {
-
 		this.linhas = linhas;
 		this.colunas = colunas;
 		this.minas = minas;
@@ -24,29 +23,30 @@ public class Tabuleiro implements CampoObservador {
 		associarVizinhos();
 		sortearMinas();
 	}
+	
+	public void paraCadaCampo(Consumer<Campo> funcao) {
+		campos.forEach(funcao);
+	}
 
 	public void registrarObservador(Consumer<ResultadoEvento> observador) {
 		observadores.add(observador);
 	}
 
-	private void notificarObservadores(Boolean resultado) {
+	private void notificarObservadores(boolean resultado) {
 		observadores.stream().forEach(o -> o.accept(new ResultadoEvento(resultado)));
 	}
 
 	public void abrir(int linha, int coluna) {
 		campos.parallelStream().filter(c -> c.getLinha() == linha && c.getColuna() == coluna).findFirst()
 				.ifPresent(c -> c.abrir());
-		;
 	}
 
-	public void alterarMarcacao(int linha, int coluna) {
+	public void alternarMarcacao(int linha, int coluna) {
 		campos.parallelStream().filter(c -> c.getLinha() == linha && c.getColuna() == coluna).findFirst()
 				.ifPresent(c -> c.alternarMarcacao());
-		;
 	}
 
 	private void gerarCampos() {
-
 		for (int linha = 0; linha < linhas; linha++) {
 			for (int coluna = 0; coluna < colunas; coluna++) {
 				Campo campo = new Campo(linha, coluna);
@@ -62,7 +62,6 @@ public class Tabuleiro implements CampoObservador {
 				c1.adicionarVizinho(c2);
 			}
 		}
-
 	}
 
 	private void sortearMinas() {
@@ -74,7 +73,6 @@ public class Tabuleiro implements CampoObservador {
 			campos.get(aleatorio).minar();
 			minasArmadas = campos.stream().filter(minado).count();
 		} while (minasArmadas < minas);
-
 	}
 
 	public boolean objetivoAlcancado() {
@@ -86,24 +84,28 @@ public class Tabuleiro implements CampoObservador {
 		sortearMinas();
 	}
 
+	public int getLinhas() {
+		return linhas;
+	}
+
+	public int getColunas() {
+		return colunas;
+	}
+
 	@Override
 	public void eventoOcorreu(Campo campo, CampoEvento evento) {
-
 		if (evento == CampoEvento.EXPLODIR) {
 			mostrarMinas();
 			notificarObservadores(false);
 		} else if (objetivoAlcancado()) {
 			notificarObservadores(true);
 		}
-
 	}
 
 	private void mostrarMinas() {
-
 		campos.stream()
-		.filter(c -> c.isMinado())
-		.forEach(c -> c.setAberto(true));
-
+			.filter(c -> c.isMinado())
+			.filter(c -> !c.isMarcado())
+			.forEach(c -> c.setAberto(true));
 	}
-
 }
